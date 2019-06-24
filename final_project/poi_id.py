@@ -23,10 +23,14 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 
-### Task 1: Select what features you'll use.
+print("I have used the following Versions:")
+print("Numpy Version:", np.__version__)
+print("Pandas Version:", pd.__version__)
+print("SkLearn Version:", sklearn.__version__)
+print("Scipy Version:", scipy.__version__)
+
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-### features_list is a list of strings, each of which is a feature name.
 features_list = ['poi', 'salary', 'to_messages', 'total_payments', 'bonus', 'total_stock_value', 'expenses', 'from_poi_to_this_person', 'exercised_stock_options', 'from_messages', 'other', 'from_this_person_to_poi', 'shared_receipt_with_poi', 'restricted_stock']
 
 ### Load the dictionary containing the dataset
@@ -37,7 +41,6 @@ features_list = ['poi', 'salary', 'to_messages', 'total_payments', 'bonus', 'tot
 with open('final_project_dataset_new.pkl', 'rb') as f:
     data_dict = pickle.load(f)
     
-
 # Converting Dictionary to Numpy Array
 
 name_keys = sorted(list(data_dict.keys()))
@@ -71,12 +74,13 @@ data_frame = pd.DataFrame(dataset)
 
 data_frame.head(10)
 
+# Dataset Summary
 class_counts = data_frame["poi"].value_counts()
 class_priors = class_counts / rows
 print(class_counts)
 print(class_priors)
-
-# Removing unrequired columns
+data_frame.info()
+# Removing unrequired columns/features
 poi_names = data_frame.pop('poi_name')
 poi_labels = data_frame.pop('poi')
 emails = data_frame.pop('email_address')
@@ -94,13 +98,11 @@ required_features = list(np.array(data_frame.columns)[nan_thresh - nan_percents 
 data_frame = data_frame[required_features]
 print(data_frame.columns)
 
-
 # Replacing NaNs with the Medians of Respective Features
 for df_col in data_frame.columns:
     data_frame[df_col].fillna(data_frame[df_col].median(), inplace=True)
 
 print(data_frame.head(5))
-
 
 z_scores = np.abs(stats.zscore(data_frame))
 print(z_scores)
@@ -118,7 +120,6 @@ for oi in outlier_indices:
     outlier_idx = oi
 data_frame.drop(outlier_idx)
 
-
 ### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
@@ -126,6 +127,9 @@ my_dataset = data_dict
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
+
+# Train Test Split
+x_train, x_test, y_train, y_test = train_test_split(data_frame, poi_labels, random_state = 100)
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
@@ -252,6 +256,7 @@ best_ne = num_estimators[max_idxs[0][0]]
 best_lr = learning_rates[max_idxs[1][0]]
 print("Maximum Score =", max_score, " with n_estimators =", best_ne, "and learning rate =", best_lr)
 
+
 clf = AdaBoostClassifier(n_estimators = best_ne, learning_rate=best_lr, random_state = 100)
 clf.fit(x_train, y_train)
 preds = clf.predict(x_test)
@@ -260,12 +265,6 @@ print("AdaBoost CV Score:", cross_val_score(clf, data_frame, poi_labels, cv=5).m
 print("AdaBoost Precision:", precision_score(y_test, preds, average="weighted"))
 print("AdaBoost Recall:", recall_score(y_test, preds, average="weighted"))
 print("AdaBoost F1-Score:", f1_score(y_test, preds, average="weighted"))
-
-
-# Example starting point. Try investigating other evaluation techniques!
-# from sklearn.cross_validation import train_test_split
-features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.3, random_state=42)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
